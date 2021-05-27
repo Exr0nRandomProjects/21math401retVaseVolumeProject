@@ -2,6 +2,7 @@ from tqdm import tqdm
 
 from math import cos, pi, sqrt
 from matplotlib import pyplot
+from util import frange
 
 end = 4.21
 step = 1e-6
@@ -16,12 +17,6 @@ calculation = {
         'volume':       lambda f, x: pi * f(x)**2,
         'surfacearea':  lambda f, x: 2 * pi * f(x) * sqrt(1+((f(x+step) - f(x))/step)**2)
         }
-
-def frange(start, stop, step):
-    x = start
-    while x < stop:
-        yield x
-        x += step
 
 def calc(calc_type):
     tot = 0
