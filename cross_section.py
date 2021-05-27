@@ -25,10 +25,10 @@ cross_section = {
 cross_fn = 'square'
 
 def scadsum(*args):
-    if type(args[0]) == list:
-        args = args[0]
     if args is None or len(args) == 0:
         return ops.Cube(0)
+    if type(args[0]) == list:
+        args = args[0]
     if len(args) == 1:
         return args[0]
     ret = args[0]
@@ -37,12 +37,12 @@ def scadsum(*args):
     return ret
 
 if __name__ == '__main__':
-    # out = scadsum(ops.Cube([10, 20, 30]), ops.Cube([1, 2, 3]))
-    out = scadsum([
-        cross_section[cross_fn](
-                abs(base_functions[top_fn](x)-base_functions[bot_fn](x))
-            ).translate([x, base_functions[bot_fn](x), 0])
-        for x in frange(LEFT_BOUND, RIGHT_BOUND, SLICE_WIDTH)])
+    out = scadsum()
+    for x in frange(LEFT_BOUND, RIGHT_BOUND, SLICE_WIDTH):
+        width = base_functions[top_fn](x)-base_functions[bot_fn](x)
+        out += cross_section[cross_fn](abs(width)
+                ).translate([x, base_functions[bot_fn](x) - (abs(width) if width < 0 else 0), min(width, 0)])
+
     print(out)
     out.write(OUTPUT_PATH)
 
