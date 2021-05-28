@@ -6,18 +6,19 @@ from util import frange
 from math import sqrt, pi, exp, sin, cos
 from os import getenv
 
-FN_TOP = 'sin'
-FN_BOT = 'nsin'
+FN_TOP = 'cubic'
+FN_BOT = 'cos'
 FN_CROSS = 'semicircle'
 
 OUTPUT_PATH = f"{getenv('HOME')}/projects/Taproot/21math401/KBe21math401retCrossSections.scad"
-SLICE_WIDTH = 2e-2
+SLICE_WIDTH = 1e-2
 LEFT_BOUND = 0
-RIGHT_BOUND = 10
+RIGHT_BOUND = 6
 
 base_functions = {
         'semicircle':   lambda x: sqrt(4-(x-2)**2),
-        'parabola':     lambda w: (x-2)**2,
+        'horizontal':   lambda x: 5,
+        'parabola':     lambda x: (x-2)**2,
         'cubic':        lambda x: 0.25 * (x-1)**3 - (x-1)**2 + 3,
         'xaxis':        lambda x: 0,
         'sqrt':         lambda x: sqrt(x),
@@ -34,6 +35,15 @@ cross_section = {
         'isoceles':     lambda w: isoceles_prism(SLICE_WIDTH, w, w**2/4),
         'semicircle':   lambda w: (ops.Cylinder(SLICE_WIDTH, w/2, _fn=30).rotate([0, 90, 0]).translate([0, w/2, 0])) & ops.Cube([SLICE_WIDTH, w, w]),
         'equalateral':  lambda w: isoceles_prism(SLICE_WIDTH, w, w),
+        }
+
+vol_fns = {
+        'slab':         lambda w: w,
+        'rect':         lambda w: w**2/2,
+        'square':       lambda w: w**2,
+        'isoceles':     lambda w: w**3/8,
+        'semicircle':   lambda w: pi*w**2/8,
+        'equalateral':  lambda w: sqrt(3)/4 * w**2,
         }
 
 def isoceles_prism(w, l, h):
@@ -56,14 +66,19 @@ def scadsum(*args):
 
 def gen_crosssectional_solid(top_fn, bot_fn, cross_fn):
     ret = scadsum()
+    vol = 0
     for x in tqdm(frange(LEFT_BOUND, RIGHT_BOUND, SLICE_WIDTH), total=(RIGHT_BOUND-LEFT_BOUND)/SLICE_WIDTH):
         try:
             width = base_functions[top_fn](x)-base_functions[bot_fn](x)
-            temp = cross_section[cross_fn](abs(width))
-            if width < 0: temp = temp.rotate([180, 0, 0])
-            ret += temp.translate([x, base_functions[bot_fn](x)])
+            obj = cross_section[cross_fn](abs(width))
+            if width < 0: obj = obj.rotate([180, 0, 0])
+            ret += obj.translate([x, base_functions[bot_fn](x)])
+            vol += vol_fns[cross_fn](abs(width))*SLICE_WIDTH
         except ValueError:
             pass
+
+    print(f'total volume: {vol}')
+
     return ret
 
 if __name__ == '__main__':
