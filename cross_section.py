@@ -4,16 +4,17 @@ from tqdm import tqdm
 from util import frange
 
 from math import sqrt, pi, exp, sin, cos
+from inspect import getsource
 from os import getenv
 
-FN_TOP = 'cubic'
-FN_BOT = 'cos'
-FN_CROSS = 'semicircle'
+FN_TOP = 'cos'
+FN_BOT = 'sqrt'
+FN_CROSS = 'isoceles'
 
-OUTPUT_PATH = f"{getenv('HOME')}/projects/Taproot/21math401/KBe21math401retCrossSections.scad"
-SLICE_WIDTH = 1e-2
+OUTPUT_PATH = f"{getenv('HOME')}/Desktop/output.scad"
+SLICE_WIDTH = 1e-1
 LEFT_BOUND = 0
-RIGHT_BOUND = 6
+RIGHT_BOUND = 3
 
 base_functions = {
         'semicircle':   lambda x: sqrt(4-(x-2)**2),
@@ -49,7 +50,7 @@ vol_fns = {
 def isoceles_prism(w, l, h):
     return ops.Polyhedron(
         points = [[0, 0, 0], [0, l, 0], [w, 0, 0], [w, l, 0], [0, l/2, h], [w, l/2, h]],
-        faces  = [[0, 1, 2, 3], [0, 1, 4], [2, 3, 5], [1, 2, 5, 4], [0, 3, 5, 4]]
+        faces  = [[0, 1, 3, 2], [0, 1, 4], [2, 3, 5], [1, 3, 5, 4], [0, 2, 5, 4]]
     )
 
 def scadsum(*args):
@@ -81,7 +82,23 @@ def gen_crosssectional_solid(top_fn, bot_fn, cross_fn):
 
     return ret
 
+def get_opt_stdin(name, opts):
+    while True:
+        print(f'What should the {name} be?')
+        for v in opts.values():
+            print(getsource(v), end='')
+        g = input()
+        if len(g) == 0: return None
+        if g in opts.keys():
+            return g
+        else: print(f'invalid {name}!')
+
 if __name__ == '__main__':
+    FN_TOP   = get_opt_stdin('top function', base_functions) or FN_TOP
+    FN_BOT   = get_opt_stdin('bottom function', base_functions) or FN_BOT
+    FN_CROSS = get_opt_stdin('cross section function', cross_section) or FN_CROSS
     gen_crosssectional_solid(FN_TOP, FN_BOT, FN_CROSS).write(OUTPUT_PATH)
+
+    print(f'finished! Open {OUTPUT_PATH} in OpenSCAD to see the result')
     # (gen_crosssectional_solid('sqrt', 'semicircle', 'semicircle')-gen_crosssectional_solid('sqrt', 'semicircle', 'equalateral')).write(OUTPUT_PATH) # broken
 

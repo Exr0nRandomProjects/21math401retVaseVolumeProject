@@ -5,5 +5,11 @@
 
 ## cross section volumes
 
-Install OpenSCAD by visiting their website, or `yay -S openscad`
+Install OpenSCAD by visiting [their website](https://openscad.org/downloads.html), or `yay -S openscad`
+
+OpenSCAD is not signed, so you'll have to right click on the application in finder then hit Open instead of just double-clicking.
+
+And you need to install the python wrapper and the progress bar: `python3 -m pip install openpyscad tqdm`
+
+Then, run the file and look on your desktop for `output.scad`
 
