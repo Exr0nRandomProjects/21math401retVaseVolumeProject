@@ -3,23 +3,23 @@ from tqdm import tqdm
 
 from util import frange
 
-from math import sqrt, pi, exp, sin, cos
+from math import sqrt, pi, exp, sin, cos, log as ln
 from inspect import getsource
 from os import getenv
 
-FN_TOP = 'cos'
-FN_BOT = 'sqrt'
-FN_CROSS = 'isoceles'
+FN_TOP = 'sqrt'
+FN_BOT = 'xaxis'
+FN_CROSS = 'rect'
 
 OUTPUT_PATH = f"{getenv('HOME')}/Desktop/output.scad"
 SLICE_WIDTH = 1e-1
 LEFT_BOUND = 0
-RIGHT_BOUND = 3
+RIGHT_BOUND = 9
 
 base_functions = {
         'semicircle':   lambda x: sqrt(4-(x-2)**2),
-        'horizontal':   lambda x: 5,
-        'parabola':     lambda x: (x-2)**2,
+        'horizontal':   lambda x: 9,
+        'parabola':     lambda x: x**2,
         'cubic':        lambda x: 0.25 * (x-1)**3 - (x-1)**2 + 3,
         'xaxis':        lambda x: 0,
         'sqrt':         lambda x: sqrt(x),
@@ -27,6 +27,7 @@ base_functions = {
         'sin':          lambda x: sin(x+1)+1,
         'cos':          lambda x: cos(x+1)+1,
         'exp':          lambda x: exp(x-2),
+        'custom':       []
         }
 
 cross_section = {
@@ -86,19 +87,37 @@ def get_opt_stdin(name, opts):
     while True:
         print(f'What should the {name} be?')
         for v in opts.values():
+            if type(v) == list: break
             print(getsource(v), end='')
+        if 'custom' in opts:
+            print("or type 'custom' to imput your own function")
         g = input()
         if len(g) == 0: return None
+        if g == 'custom':
+            opts['custom'].append(eval('lambda x: ' + input("Enter function here: ").replace('^', '**')))
+            return 'custom'
         if g in opts.keys():
             return g
         else: print(f'invalid {name}!')
 
 if __name__ == '__main__':
-    FN_TOP   = get_opt_stdin('top function', base_functions) or FN_TOP
-    FN_BOT   = get_opt_stdin('bottom function', base_functions) or FN_BOT
-    FN_CROSS = get_opt_stdin('cross section function', cross_section) or FN_CROSS
-    gen_crosssectional_solid(FN_TOP, FN_BOT, FN_CROSS).write(OUTPUT_PATH)
+    while True:
+        FN_TOP   = get_opt_stdin('top function', base_functions) or FN_TOP
+        FN_BOT   = get_opt_stdin('bottom function', base_functions) or FN_BOT
+        FN_CROSS = get_opt_stdin('cross section function', cross_section) or FN_CROSS
 
-    print(f'finished! Open {OUTPUT_PATH} in OpenSCAD to see the result')
+        # spaghetti ahead, please avert your eyes
+        if FN_TOP == 'custom':
+            FN_TOP = 'custom1'
+            base_functions['custom1'] = base_functions['custom'].pop(0)
+        if FN_BOT == 'custom':
+            FN_BOT = 'custom2'
+            base_functions['custom2'] = base_functions['custom'].pop(0)
+
+        gen_crosssectional_solid(FN_TOP, FN_BOT, FN_CROSS).write(OUTPUT_PATH)
+
+        print(f'finished! Open {OUTPUT_PATH} in OpenSCAD to see the result')
+
+        input('press enter to begin a new solid')
     # (gen_crosssectional_solid('sqrt', 'semicircle', 'semicircle')-gen_crosssectional_solid('sqrt', 'semicircle', 'equalateral')).write(OUTPUT_PATH) # broken
 
